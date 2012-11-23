@@ -4,8 +4,6 @@
 	import com.game.common.Setting;
 	
 	import flash.display.MovieClip;	
-	import flash.events.TimerEvent;
-	import flash.utils.Timer;
 	import flash.events.Event;
 		
 	/**
@@ -18,13 +16,14 @@
 		protected var dir:uint			= 0;
 		protected var mDir:uint			= 0;
 		
-		protected var mTimer:Timer;
-		
 		protected var speed:uint		= Setting.gameSpeed;
 		protected var turn:int			= 0;
 		protected var moveStep:Number	= Setting.cloneMove;
 		
-		public function initClone(px:int, py:int, pd:uint):void {
+		protected var removeCount:int	= -1;
+		
+		public function initClone(px:int, py:int, pd:int):void {
+			if (pd == -1) pd = Setting.DOWN;
 			this.addEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
 			dir 	= pd;
 			x 		= px;
@@ -32,9 +31,8 @@
 			destX 	= x;
 			destY 	= y;
 			doCekMove();
-			mTimer = new Timer(speed);
-			mTimer.addEventListener(TimerEvent.TIMER, onTimer);
-			mTimer.start();
+
+			removeCount = Setting.removeClone;
 		}
 		
 		protected function onRemoved(e:Event):void {
@@ -45,14 +43,15 @@
 		}
 		
 		public function uninitClone():void {
-			mTimer.removeEventListener(TimerEvent.TIMER, onTimer);
-			mTimer.stop();
 		}
 		
-		protected function onTimer(e:TimerEvent):void {
-			if (mTimer.currentCount >= Setting.removeClone) {
-				RemoveClone();
-				return;
+		public function onTimer():void {
+			if (removeCount > 0) {
+				removeCount--;
+				if (removeCount == 0){
+					RemoveClone();
+					return;
+				}
 			}
 			DoMove();
 		}
@@ -130,6 +129,7 @@
 				destX = posX * 40;
 				destY = (posY-1) * 40;
 			}else {
+				if (code == 5 && turn == 0) App.GetInstance().mMap.PushBox(posX, posY - 1, Setting.UP);
 				changeDirection();
 			}
 		}
@@ -150,6 +150,7 @@
 				destX = posX * 40;
 				destY = (posY+1) * 40;
 			}else {
+				if (code == 5 && turn == 0) App.GetInstance().mMap.PushBox(posX, posY + 1, Setting.DOWN);
 				changeDirection();
 			}
 		}
@@ -170,6 +171,7 @@
 				destX = (posX-1) * 40;
 				destY = posY * 40;
 			}else {
+				if (code == 5 && turn == 0) App.GetInstance().mMap.PushBox(posX - 1, posY, Setting.LEFT);
 				changeDirection();
 			}
 		}
@@ -190,6 +192,7 @@
 				destX = (posX+1) * 40;
 				destY = posY * 40;
 			}else {
+				if (code == 5 && turn == 0) App.GetInstance().mMap.PushBox(posX + 1, posY, Setting.RIGHT);
 				changeDirection();
 			}
 		}
@@ -198,12 +201,6 @@
 			var mPosX:int = Math.floor(this.x / 40);
 			var mPosY:int = Math.floor(this.y / 40);
 			if (mPosX == posX && mPosY == posY) return true;
-			switch(dir) {
-				case Setting.UP:	if (mPosX == posX && mPosY - 1 == posY) return true;
-				case Setting.DOWN:	if (mPosX == posX && mPosY + 1 == posY) return true;
-				case Setting.LEFT:	if (mPosX - 1 == posX && mPosY == posY) return true;
-				case Setting.RIGHT:	if (mPosX + 1 == posX && mPosY == posY) return true;
-			}
 			return false;
 		}
 		

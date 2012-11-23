@@ -16,7 +16,7 @@
 		
 		public function intro():void {
 			this.addEventListener(Event.ADDED_TO_STAGE, onAdded);
-			mTimer = new Timer(1000,1);
+			mTimer = new Timer(2000,1);
 		}
 		
 		protected function onAdded(e:Event):void {			

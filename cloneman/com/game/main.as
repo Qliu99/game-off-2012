@@ -10,6 +10,8 @@
 	import com.clip.resultFail;
 	import com.clip.resultWin;
 	import com.clip.finishClip;
+	import com.clip.levelScreen;
+	import com.clip.creditScreen;
 	
 	import flash.display.MovieClip;
 	import flash.events.Event;
@@ -36,6 +38,23 @@
 			App.GetInstance().gameState = Setting.STATE_TITLE;
 			var titlePage:title = new title();
 			this.addChild(titlePage);
+			App.GetInstance().mSound.ClearSound();
+			App.GetInstance().mSound.StopMusic();
+			App.GetInstance().mSound.PlayMusic("loopFront");
+		}
+		
+		public function CreateLevelScreen():void {
+			var level:levelScreen = new levelScreen();
+			this.addChild(level);
+		}
+		
+		public function CreateCreditScreen():void {
+			var credit:creditScreen = new creditScreen();
+			this.addChild(credit);
+		}
+		
+		public function ReturnToTitle(screen:MovieClip):void {
+			this.removeChild(screen);
 		}
 		
 		protected function ClearStage():void {
@@ -47,6 +66,7 @@
 		public function EnterStage(stage:int):void {
 			App.GetInstance().curLevel = stage;
 			initLevel();
+			App.GetInstance().mSound.PlayMusic("loopGame");
 		}
 		
 		protected function initLevel():void {
@@ -58,6 +78,7 @@
 			var mIntro:intro = new intro();
 			this.addChild(mIntro);
 			
+			App.GetInstance().mSound.ClearSound();
 			App.GetInstance().gameState = Setting.STATE_INTRO;			
 		}
 		

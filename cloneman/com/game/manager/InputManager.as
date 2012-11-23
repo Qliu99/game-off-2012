@@ -22,22 +22,28 @@ package com.game.manager
 		}
 
 		protected function onKeyDownListener(e:KeyboardEvent):void {
-			lastKey = e.keyCode;
 			if (App.GetInstance().gameState != Setting.STATE_START) return;
 			switch(e.keyCode) {
 				case Keyboard.UP:
 				case Keyboard.DOWN:
 				case Keyboard.LEFT:
 				case Keyboard.RIGHT:
-				case Keyboard.SPACE:
+				//case Keyboard.SPACE:
+					lastKey = e.keyCode;
 					App.GetInstance().mCloneman.Move(e.keyCode); 
 					break;
 			}
 		}
 		
 		protected function onKeyUpListener(e:KeyboardEvent):void {
+			//trace("up "+lastKey);
 			if (App.GetInstance().gameState != Setting.STATE_START) return;
-			if (e.keyCode == lastKey) App.GetInstance().mCloneman.StopMoving();
+			switch(e.keyCode) {
+				case Keyboard.SPACE:	App.GetInstance().mCloneman.DoClone(); break;
+				default:
+					if (e.keyCode == lastKey) App.GetInstance().mCloneman.StopMoving();
+					break;
+			}
 		}
 	}
 	

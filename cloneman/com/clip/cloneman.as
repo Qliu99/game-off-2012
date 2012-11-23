@@ -6,9 +6,7 @@
 	
 	import flash.events.Event;	
 	import flash.display.MovieClip;	
-	import flash.events.TimerEvent;
 	import flash.ui.Keyboard;
-	import flash.utils.Timer;
 	
 	public class cloneman extends MovieClip {
 		protected var isRunning:Boolean = false;
@@ -17,22 +15,21 @@
 		protected var curMove:uint		= 0;
 		protected var destX:int			= 0;
 		protected var destY:int			= 0;
-		protected var mTimer:Timer;
-		
+
 		protected var speed:uint		= Setting.gameSpeed;
 		protected var moveStep:Number	= Setting.playerMove;
 		protected var lastMove:int 	 	= -1;
 		protected var myClone:clone;
 		
+		protected var keys:int			= 0;
+		
 		public function cloneman() {
-			mTimer = new Timer(speed);
 		}
 		
 		public function initCloneMan():void {
 			isDead = false;
+			keys = 0;
 			this.addEventListener(Event.ADDED_TO_STAGE, onAddedToStage);
-			mTimer.addEventListener(TimerEvent.TIMER, onTimer);
-			mTimer.start();
 		}
 		
 		protected function onAddedToStage(e:Event):void {
@@ -42,19 +39,29 @@
 		}
 		
 		public function uninitCloneMan():void {
-			mTimer.removeEventListener(TimerEvent.TIMER, onTimer);
-			mTimer.stop();
 		}
 		
-		protected function onTimer(e:TimerEvent):void {
+		public function onTimer():void {
 			DoMove();
+			if (myClone != null) {
+				myClone.onTimer();
+			}
 		}
 		
 		protected function DoMove():void {
 			if (App.GetInstance().gameState != Setting.STATE_START) return;
 			if (isDead) return;
-			var posX:int = Math.floor(this.x / 40);
-			var posY:int = Math.floor(this.y / 40);
+			
+			var posX:int = Math.round(this.x / 40);
+			var posY:int = Math.round(this.y / 40);
+			
+			if (App.GetInstance().mMap.CheckHitTrap(posX, posY)) {
+				DoDie();
+				return;
+			}
+
+			App.GetInstance().mPlayerMove[posY][posX] = Setting.playerStep;
+
 			if (destX != x || destY != y) {
 				if (curMove != 0) {
 					switch(curMove) {
@@ -75,23 +82,19 @@
 							this.x += moveStep; 
 						break;
 					}
+					App.GetInstance().mSound.PlaySound("walk", this.name);
 				}
-				posX = Math.floor(this.x / 40);
-				posY = Math.floor(this.y / 40);
-				App.GetInstance().mPlayerMove[posY][posX] = Setting.playerStep;
+				App.GetInstance().mMap.focusCamera();
 			}else {
-				App.GetInstance().mPlayerMove[posY][posX] = Setting.playerStep;
-				
 				if (App.GetInstance().mMap.CheckHitWinning(posX, posY)) {
 					DoWin();
 					return;
 				}
-				if (App.GetInstance().mMap.CheckHitTrap(posX, posY)) {
-					DoDie();
-					return;
+				if (App.GetInstance().mMap.CheckHitItems(posX, posY)) {
 				}
 				
 				if (newMove != 0) {
+					//trace(newMove);
 					curMove = newMove;
 					switch(curMove) {
 						case Keyboard.UP:	cekUp(posX,posY); break;
@@ -109,18 +112,24 @@
 			if (posY <= 0) return;
 			var code:int = parseInt(App.GetInstance().mCodeArray[posY-1][posX]);
 			if (isNaN(code)) code = 0;
-			if (code == 0) {
-				destX = posX * 40;
-				destY = (posY-1) * 40;
-			}else if (code == 3) {
-				App.GetInstance().mMap.PushBox(posX, posY - 1, Setting.UP);
-				code = parseInt(App.GetInstance().mCodeArray[posY - 1][posX]);
-				if (code == 0) cekUp(posX, posY);
-			}else{
-				x = posX * 40;
-				y = posY * 40;
-				destX = x;
-				destY = y;
+			switch(code) {
+				case 0:
+					destX = posX * 40;
+					destY = (posY - 1) * 40;
+					break;
+				case 3:
+				case 4:
+				case 5:
+					App.GetInstance().mMap.PushBox(posX, posY - 1, Setting.UP);
+					code = parseInt(App.GetInstance().mCodeArray[posY - 1][posX]);
+					if (code == 0) cekUp(posX, posY);
+					break;
+				default:
+					x = posX * 40;
+					y = posY * 40;
+					destX = x;
+					destY = y;
+				break;
 			}
 		}
 		
@@ -128,18 +137,25 @@
 			if (posY >= App.GetInstance().mHeight-1) return;
 			var code:int = parseInt(App.GetInstance().mCodeArray[posY + 1][posX]);
 			if (isNaN(code)) code = 0;
-			if (code == 0) {
-				destX = posX * 40;
-				destY = (posY+1) * 40;
-			}else if (code == 3) {
-				App.GetInstance().mMap.PushBox(posX, posY + 1, Setting.DOWN);
-				code = parseInt(App.GetInstance().mCodeArray[posY + 1][posX]);
-				if (code == 0) cekDown(posX, posY);
-			}else{
-				x = posX * 40;
-				y = posY * 40;
-				destX = x;
-				destY = y;
+			switch(code) {
+				case 0:
+					destX = posX * 40;
+					destY = (posY + 1) * 40;
+					break;
+				case 3:
+				case 4:
+				case 5:
+					App.GetInstance().mMap.PushBox(posX, posY + 1, Setting.DOWN);
+					code = parseInt(App.GetInstance().mCodeArray[posY + 1][posX]);
+					if (code == 0) cekDown(posX, posY);
+					break;
+				default:
+					x = posX * 40;
+					y = posY * 40;
+					destX = x;
+					destY = y;
+					break;
+				break;
 			}
 		}
 		
@@ -147,18 +163,24 @@
 			if (posX <= 0) return;
 			var code:int = parseInt(App.GetInstance().mCodeArray[posY][posX-1]);
 			if (isNaN(code)) code = 0;
-			if (code == 0) {
-				destX = (posX-1) * 40;
-				destY = posY * 40;
-			}else if (code == 3) {
-				App.GetInstance().mMap.PushBox(posX - 1, posY, Setting.LEFT);
-				code = parseInt(App.GetInstance().mCodeArray[posY][posX - 1]);
-				if (code == 0) cekLeft(posX, posY);
-			}else{
-				x = posX * 40;
-				y = posY * 40;
-				destX = x;
-				destY = y;
+			switch(code) {
+				case 0:
+					destX = (posX-1) * 40;
+					destY = posY * 40;
+					break;
+				case 3:
+				case 4:
+				case 5:
+					App.GetInstance().mMap.PushBox(posX - 1, posY, Setting.LEFT);
+					code = parseInt(App.GetInstance().mCodeArray[posY][posX - 1]);
+					if (code == 0) cekLeft(posX, posY);
+					break;
+				default:
+					x = posX * 40;
+					y = posY * 40;
+					destX = x;
+					destY = y;
+					break;
 			}
 		}
 		
@@ -166,18 +188,24 @@
 			if (posX >= App.GetInstance().mWidth-1) return;
 			var code:int = parseInt(App.GetInstance().mCodeArray[posY][posX+1]);
 			if (isNaN(code)) code = 0;
-			if (code == 0) {
-				destX = (posX+1) * 40;
-				destY = posY * 40;
-			}else if (code == 3) {
-				App.GetInstance().mMap.PushBox(posX + 1, posY, Setting.RIGHT);
-				code = parseInt(App.GetInstance().mCodeArray[posY][posX + 1]);
-				if (code == 0) cekRight(posX, posY);
-			}else{
-				x = posX * 40;
-				y = posY * 40;
-				destX = x;
-				destY = y;
+			switch(code) {
+				case 0:
+					destX = (posX+1) * 40;
+					destY = posY * 40;
+					break;
+				case 3:
+				case 4:
+				case 5:
+					App.GetInstance().mMap.PushBox(posX + 1, posY, Setting.RIGHT);
+					code = parseInt(App.GetInstance().mCodeArray[posY][posX + 1]);
+					if (code == 0) cekRight(posX, posY);
+					break;
+				default:
+					x = posX * 40;
+					y = posY * 40;
+					destX = x;
+					destY = y;
+					break;
 			}
 		}
 		
@@ -202,8 +230,8 @@
 					lastMove = Setting.RIGHT;
 					isRunning = true;
 					break;
-				case Keyboard.SPACE:
-					DoClone();
+				//case Keyboard.SPACE:
+				//	DoClone();
 				default:
 					newMove = 0;
 					break;
@@ -211,7 +239,7 @@
 			DoMove();
 		}
 		
-		protected function DoClone():void {
+		public function DoClone():void {
 			removeClone();
 			
 			var posX:int = Math.floor(this.x / 40) * 40;
@@ -219,6 +247,7 @@
 			myClone = new clone();
 			myClone.initClone(posX, posY, lastMove);
 			App.GetInstance().mMap.DoAddObject(myClone);
+			App.GetInstance().mSound.PlaySound("sendClone", myClone.name);
 		}
 		
 		public function removeClone():void {
@@ -238,6 +267,7 @@
 			isRunning = false;
 			curMove = 0;
 			gotoAndStop("idle");
+			App.GetInstance().mSound.StopSound(this.name);
 		}
 		
 		public function CloneHit(posX:int, posY:int):Boolean {
@@ -262,6 +292,7 @@
 			uninitCloneMan();
 			removeClone();
 			if (currentLabel != "dead") gotoAndStop("dead");
+			App.GetInstance().mSound.StopSound(this.name);
 			App.GetInstance().mMain.EndTheStage();
 			App.GetInstance().mMain.ShowResult(Setting.RESULT_LOSE);
 		}
@@ -276,9 +307,30 @@
 			uninitCloneMan();
 			removeClone();
 			if (currentLabel != "win") gotoAndStop("win");
+			App.GetInstance().mSound.StopSound(this.name);
 			App.GetInstance().mMain.EndTheStage();
 			App.GetInstance().mMain.ShowResult(Setting.RESULT_WIN);
 		}
+		
+		public function GetKey():void {
+			keys++;
+		}
+		
+		public function HasKey():Boolean {
+			return (keys > 0);
+		}
+		
+		public function UseKey():void {
+			keys--;
+		}
+		
+		public function IsHit(posX:int, posY:int):Boolean {
+			if (isDead) return false;
+			var px:int = Math.round(this.x / 40);
+			var py:int = Math.round(this.y / 40);
+			return (px == posX && py == posY);
+		}
+		
 	}
 	
 }

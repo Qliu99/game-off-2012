@@ -2,6 +2,7 @@ package com.game.common
 {
 	import com.game.manager.InputManager;
 	import com.game.manager.MapManager;
+	import com.game.manager.SoundManager;
 	import com.clip.cloneman;
 	import com.game.main;
 	import com.game.common.Levels;
@@ -16,6 +17,7 @@ package com.game.common
 		public var mMain:main;
 		public var mInput:InputManager;
 		public var mMap:MapManager;
+		public var mSound:SoundManager;
 		public var mLevel:Levels;
 		
 		public var gameState:int		= Setting.STATE_LOAD;
@@ -38,6 +40,7 @@ package com.game.common
 			mInput 	= new InputManager();
 			mMap	= new MapManager();
 			mLevel	= new Levels();
+			mSound 	= new SoundManager();
 		}
 	}
 	

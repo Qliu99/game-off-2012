@@ -1,5 +1,7 @@
 ﻿package com.clip
 {
+	import com.game.common.App;
+	
 	import flash.display.MovieClip;
 	import flash.events.Event;
 	import flash.events.TimerEvent;
@@ -9,13 +11,12 @@
 	 * @author Adhi
 	 */
 	public class trap extends mapObject	{
-		protected var mTimer:Timer;
-
+		protected var activateCount:int = -1;
+		protected var ACTIVATINGDELAY:int = 30;
+		public var type:String			= "s";
+		
 		public function trap():void {
 			this.addEventListener(Event.REMOVED_FROM_STAGE, onRemoved);		
-
-			mTimer = new Timer(2000, 1);
-			mTimer.addEventListener(TimerEvent.TIMER, onTimer);
 		}
 		
 		public function InitTrap(posX:int,posY:int):void {
@@ -25,25 +26,38 @@
 		}
 		
 		protected function onRemoved(e:Event):void {
-			mTimer.removeEventListener(TimerEvent.TIMER, onTimer);
 			this.removeEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
 		}
 		
-		protected function onTimer(e:TimerEvent):void {
-			mTimer.reset();
-			this.gotoAndPlay("deactivate");
+		public override function onTimer():void {
+			//trace("trap is " + activateCount);
+			if (activateCount > 0 && this.currentLabel == "activate") {
+				activateCount--;
+				if (activateCount == 0) {
+					//trace("deactivate");
+					this.gotoAndPlay("deactivate");
+					playSound();
+				}
+			}
 		}
 		
-		public override function ActivateMe(posX:int,posY:int):Boolean {
+		public override function ActivateMe(posX:int, posY:int):Boolean {
 			var px:int = Math.floor(this.x / 40);
 			var py:int = Math.floor(this.y / 40);
 			//trace(posX + "," + posY + " " + px + "," + py);
 			return (posX == px && posY == py);
 		}
 		
-		public function ActivateTrap():void {
-			this.gotoAndPlay("activate");
-			mTimer.start();
+		public override function DoActivate():void {
+			if (activateCount <= 0){
+				this.gotoAndPlay("activate");
+				activateCount = ACTIVATINGDELAY;
+				playSound();
+			}
+		}
+		
+		protected function playSound():void {
+			App.GetInstance().mSound.PlaySound("trapMoving", this.name);
 		}
 		
 	}	

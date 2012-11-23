@@ -30,10 +30,12 @@
 		}
 		
 		protected function onRetryClick(e:MouseEvent):void {
+			App.GetInstance().mSound.PlaySound("sendClone", this.name);
 			App.GetInstance().mMain.RetryLevel();
 		}
 		
 		protected function onQuitClick(e:MouseEvent):void {
+			App.GetInstance().mSound.PlaySound("sendClone", this.name);
 			App.GetInstance().mMain.QuitLevel();
 		}
 	}

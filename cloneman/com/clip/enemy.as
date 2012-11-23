@@ -4,21 +4,17 @@
 	import com.game.common.Setting;
 	import flash.display.MovieClip;
 	import flash.events.Event;
-	import flash.events.TimerEvent;
-	import flash.utils.Timer;
 	
 	/**
 	 * @author Adhi
 	 */
 	public class enemy extends MovieClip {
-		protected var dist:int			= Setting.enemy1Dist;
+		protected var dist:int			= 1;
 		protected var destX:int			= 0;
 		protected var destY:int			= 0;
 		protected var dir:int			= -1;
 		protected var fRow:int			= 0;
 		protected var fCol:int			= 0;
-		
-		protected var mTimer:Timer;
 		
 		protected var speed:int			= Setting.gameSpeed;
 		protected var turn:int			= 0;
@@ -38,9 +34,7 @@
 			destX 	= x;
 			destY 	= y;
 			
-			mTimer = new Timer(speed);
-			mTimer.addEventListener(TimerEvent.TIMER, onTimer);
-			mTimer.start();
+			isDead = false;
 		}
 		
 		protected function onRemoved(e:Event):void {
@@ -49,12 +43,9 @@
 		}
 		
 		public function uninitEnemy():void {
-			isDead = false;
-			mTimer.removeEventListener(TimerEvent.TIMER, onTimer);
-			mTimer.stop();
 		}
 		
-		protected function onTimer(e:TimerEvent):void {
+		public function onTimer():void {
 			DoMove();
 		}
 
@@ -69,8 +60,16 @@
 		protected function changeDirection(posX:int,posY:int): void {			
 		}
 		
-		protected function DoDie():void {
-			
+		public function DoDie():void {
+			dir = -1;
+			destX = x;
+			destY = y;
+			isDead = true;
+			deadCount = Setting.deadRemove;
+		}
+		
+		public function DoPush(pd:int):Boolean {
+			return false
 		}
 		
 		/******************************** TRACK PLAYER/CLONE LOCATION **********************************/
@@ -79,6 +78,7 @@
 			for (var i:int = 1; i <= far; i++) {
 				if ((posY - i) < 0) break;
 				var code:int = parseInt(App.GetInstance().mCodeArray[posY - i][posX]);
+				//trace("cek up " + code);
 				if (isNaN(code)) code = 0;
 				if (code == 0) {
 					code = parseInt(App.GetInstance().mPlayerMove[posY - i][posX]);
@@ -90,7 +90,7 @@
 						return code;
 					}
 				}else {
-					break;
+					return -1;
 				}
 			}
 			return 0;
@@ -100,6 +100,7 @@
 			for (var i:int = 1; i <= far; i++) {
 				if ((posY + i) >= App.GetInstance().mHeight) break;
 				var code:int = parseInt(App.GetInstance().mCodeArray[posY + i][posX]);
+				//trace("cek down " + code);
 				if (isNaN(code)) code = 0;
 				if (code == 0) {
 					code = parseInt(App.GetInstance().mPlayerMove[posY + i][posX]);
@@ -111,7 +112,7 @@
 						return code;
 					}
 				}else {
-					break;
+					return -1;
 				}
 			}
 			return 0;
@@ -120,7 +121,8 @@
 		protected function cekLeft(posX:int, posY:int, far:int):int {
 			for (var i:int = 1; i <= far; i++) {
 				if ((posX - i) < 0) break;
-				var code:int = parseInt(App.GetInstance().mCodeArray[posY][posX-i]);
+				var code:int = parseInt(App.GetInstance().mCodeArray[posY][posX - i]);
+				//trace("cek left " + code);
 				if (isNaN(code)) code = 0;
 				if (code == 0) {
 					code = parseInt(App.GetInstance().mPlayerMove[posY][posX-i]);
@@ -132,7 +134,7 @@
 						return code;
 					}
 				}else {
-					break;
+					return -1;
 				}
 			}
 			return 0;
@@ -142,6 +144,7 @@
 			for (var i:int = 1; i <= far; i++) {
 				if ((posX + i) >= App.GetInstance().mWidth) break;
 				var code:int = parseInt(App.GetInstance().mCodeArray[posY][posX + i]);
+				//trace("cek right " + code);
 				if (isNaN(code)) code = 0;
 				if (code == 0) {
 					code = parseInt(App.GetInstance().mPlayerMove[posY][posX+i]);
@@ -153,10 +156,18 @@
 						return code;
 					}
 				}else {
-					break;
+					return -1;
 				}
 			}
 			return 0;
+		}
+		
+		public function IsHit(posX:int, posY:int, type:String = ""):Boolean {
+			if (isDead) return false;
+			var px:int = Math.round(this.x / 40);
+			var py:int = Math.round(this.y / 40);
+			//trace("is Hit " + this.name + " " + px + "," + py + " " + posX + "," + posY);
+			return (px == posX && py == posY);
 		}
 		
 	}

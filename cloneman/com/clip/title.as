@@ -18,15 +18,28 @@
 		protected function onAdded(e:Event):void {
 			this.removeEventListener(Event.ADDED_TO_STAGE, onAdded);
 			this["btn_start"].addEventListener(MouseEvent.CLICK, onStartClick);
+			this["btn_credit"].addEventListener(MouseEvent.CLICK, onCreditClick);
 		}
 		
 		protected function onRemoved(e:Event):void {
 			this.removeEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
 			this["btn_start"].removeEventListener(MouseEvent.CLICK, onStartClick);
+			this["btn_credit"].removeEventListener(MouseEvent.CLICK, onCreditClick);
 		}
 		
 		protected function onStartClick(e:MouseEvent):void {
+			App.GetInstance().mSound.PlaySound("sendClone", this.name);
+			/* speeding purpose
 			App.GetInstance().mMain.EnterStage(Setting.defaultLevel);
+			//*/
+			//*
+			App.GetInstance().mMain.CreateLevelScreen();
+			//*/
+		}
+		
+		protected function onCreditClick(e:MouseEvent):void {
+			App.GetInstance().mSound.PlaySound("sendClone", this.name);
+			App.GetInstance().mMain.CreateCreditScreen();
 		}
 		
 	}

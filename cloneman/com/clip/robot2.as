@@ -8,40 +8,18 @@
 	/**
 	 * @author Adhi
 	 */
-	public class enemy1 extends enemy {
-		protected var moveArray:Array;
-		protected var goBackCount:int;
-		protected var goBack:Boolean	= false;
-		protected var moveCount:Number 	= 0;
-		
+	public class robot2 extends enemy {
 		protected var foundCount:Number = 0;
 		protected var SURPRISECOUNT:Number = 4;
 		
 		public override function initEnemy(px:int, py:int):void {
 			super.initEnemy(px, py);
-			dist 		= Setting.enemy1Dist;
-			moveArray 	= new Array(App.GetInstance().mHeight);
-			for (var i:int = 0; i < moveArray.length; i++) {
-				moveArray[i] = new Array(App.GetInstance().mWidth);
-				for (var j:int = 0; j < moveArray[i].length; j++) {
-					moveArray[i][j] = 0;
-				}
-			}
-			//trace(moveArray[0].length + "," + moveArray.length);
 			dist = Setting.enemy1Dist;
-		}
-		
-		protected function CleanMoveArray():void {
-			for (var i:int = 0; i < moveArray.length; i++) {
-				for (var j:int = 0; j < moveArray.length; j++) {
-					moveArray[i][j] = 0;
-				}
-			}			
 		}
 		
 		protected override function DoMove():void {
 			if (App.GetInstance().gameState != Setting.STATE_START) return;
-			//trace(this.name+" "+isDead);
+
 			if (isDead) {
 				if (deadCount > 0 ) {
 					deadCount--;
@@ -57,11 +35,10 @@
 				foundCount--;
 				return;
 			}
-			
+			/*
 			doCheckHit();
 			
 			if (destX != x || destY != y) {
-				App.GetInstance().mSound.PlaySound("walk", this.name);
 				switch(dir) {
 					case Setting.UP:						
 						if (currentLabel != "up") 	gotoAndStop("up");
@@ -83,57 +60,40 @@
 			}else {
 				doCekMove();
 			}
+			*/
 		}
 		
 		protected function doCheckHit():void {
 			var posX:int = Math.round(this.x / 40);
 			var posY:int = Math.round(this.y / 40);
 
-			//trace(this.name+" at " + posX + "," + posY + " " + (moveCount) +" "+ moveArray[posY][posX]);
-			if (moveArray[posY][posX] == 0 && !goBack) {
-				//trace(this.name+" put number at " + posX + "," + posY + " " + (moveCount + 1));
-				moveArray[posY][posX] = moveCount++;
-			}
-
-			var value:int = App.GetInstance().mPlayerMove[posY][posX];
-			if (value > 0) {
-				App.GetInstance().mPlayerMove[posY][posX] = Setting.enemyStep;
-			}
-			
 			if (App.GetInstance().mMap.CheckHitPlayerAndClone(posX, posY)) {
 				x = posX * 40;
 				y = posY * 40;
 				changeDirection(posX,posY);
 			}
-			
+			/*
 			if (App.GetInstance().mMap.CheckHitTrap(posX, posY)) {
 				//trace("check hit trap hit "+this.name);
 				DoDie();
 				return;
 			}
-			
+			*/
 		}
 		
 		public override function DoDie():void {
 			super.DoDie();
-			CleanMoveArray();
 			if (currentLabel != "dead") this.gotoAndStop("dead");
-			App.GetInstance().mSound.StopSound(this.name);
+			App.GetInstance().mSound.PlaySound("explode", this.name);
 		}
 		
 		protected override function doCekMove():void {
 			var posX:int = Math.floor(this.x / 40);
 			var posY:int = Math.floor(this.y / 40);
 
-			if (!goBack && dir != -1) {
+			if (dir != -1) {
 				changeDirection(posX,posY);
 			}else {
-				if (goBack) {
-					if (goBackCount > 0) goBackCount--;
-					if (goBackCount <= 0) {
-						TraceBack(posX, posY);
-					}
-				}
 				var tmpDir = dir;
 				var tmpDX = destX;
 				var tmpDY = destY;
@@ -150,13 +110,11 @@
 						break;
 					}
 					if (found > 0) {
-						//trace("Found at " + found +" pdir=" + pdir);
 						if (found == Setting.playerStep || found == Setting.cloneStep) {
 							var surp:MovieClip = new surprise();
 							surp.x = this.x;
 							surp.y = this.y;
 							App.GetInstance().mMap.DoAddObject(surp);
-							goBack = false;
 							//start aftering
 							foundCount = SURPRISECOUNT;
 							break;
@@ -192,20 +150,10 @@
 				curMaxVal = rightVal;
 			}
 			
-			//trace("change direction dir " + dir+" "+upVal+","+rightVal+","+downVal+","+leftVal);
-			
 			destX = x;
 			destY = y;
 			
 			if (curMaxVal <= 0) dir = -1;
-			if (dir == -1) {
-				goBack = true;
-				goBackCount = Setting.goBackDelay;
-				if (currentLabel != "idle") gotoAndStop("idle");
-				App.GetInstance().mSound.StopSound(this.name);
-				return;
-			}
-
 			switch(dir) {
 				case Setting.RIGHT:		destX = this.x + 40; break;
 				case Setting.LEFT:		destX = this.x - 40; break;	
@@ -214,70 +162,16 @@
 			}
 		}
 		
-		protected function TraceBack(posX:int, posY:int):void {
-			goBack = true;
-			
-			var upVal:int		= moveArray[posY - 1][posX];
-			var downVal:int		= moveArray[posY + 1][posX];
-			var leftVal:int		= moveArray[posY][posX - 1];
-			var rightVal:int	= moveArray[posY][posX + 1];
-			
-			var minVal:int		= moveArray[posY][posX];
-			
-			dir = -1;
-			if (upVal > 0 && (minVal == -1 || upVal < minVal)){
-				dir = Setting.UP;
-				minVal = upVal;
-			}
-			if (rightVal > 0 && (minVal == -1 ||rightVal < minVal)) {
-				dir = Setting.RIGHT;
-				minVal = rightVal;
-			}
-			if (downVal > 0 && (minVal == -1 ||downVal < minVal)) {
-				dir = Setting.DOWN;
-				minVal = downVal;
-			}
-			if (leftVal > 0 && (minVal == -1 ||leftVal < minVal)) {
-				dir = Setting.LEFT;
-				minVal = leftVal;
-			}
-			
-			//trace("Trace back " +moveCount+" = "+upVal + "," + rightVal + "," + downVal + "," + leftVal+" "+minVal);
-			moveCount = minVal;
-			
-			if (dir != -1) {
-				var canMove:int = 0;
-				switch(dir) {
-					case Setting.DOWN: 	canMove = cekDown(posX, posY, 1);	break;
-					case Setting.UP: 	canMove = cekUp(posX, posY, 1);		break;
-					case Setting.LEFT: 	canMove = cekLeft(posX, posY, 1);	break;
-					case Setting.RIGHT: canMove = cekRight(posX, posY, 1);	break;
-				}
-				if (canMove == -1) {
-					dir = -1;
-				}
-			}
-			
-			if (dir == -1) {
-				//trace("Should have already been back yet");
-				CleanMoveArray();
-				goBack = false;
-				if (currentLabel != "idle") gotoAndStop("idle");
-				App.GetInstance().mSound.StopSound(this.name);
-				return;
-			}
-			
-			destX = x;
-			destY = y;
-			
-			//trace("Trace back dir "+dir);
-			switch(dir) {
-				case Setting.RIGHT:		destX = this.x + 40; break;
-				case Setting.LEFT:		destX = this.x - 40; break;	
-				case Setting.UP:		destY = this.y - 40; break;
-				case Setting.DOWN:		destY = this.y + 40; break;
-			}
+		public override function IsHit(posX:int, posY:int, type:String = ""):Boolean {
+			//trace("is hit "+type);
+			if (type == "s") return false;
+			if (isDead) return false;
+			var px:int = Math.round(this.x / 40);
+			var py:int = Math.round(this.y / 40);
+			//trace("is hit "+type);
+			return (px == posX && py == posY);
 		}
 		
-	}	
+	}
+	
 }
