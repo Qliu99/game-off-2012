@@ -7,6 +7,7 @@
 	import flash.events.Event;
 	import flash.events.MouseEvent;
 	
+	import fl.containers.ScrollPane;
 	/**
 	 * @author Adhi
 	 */
@@ -18,18 +19,25 @@
 		
 		protected function onAdded(e:Event):void {
 			this.addEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
-			for (var i:int = 1; i < Setting.maxLevel;i+=10){
-				this["btn_level_"+i].addEventListener(MouseEvent.CLICK, onClicked);
+			for (var i:int = 0; i < Setting.maxLevel; i ++) {
+				var newButton:MovieClip = new levelSelection();
+				newButton.x = 10 + (i % 3) * 200;
+				newButton.y = 5 + Math.floor(i / 3) * 120;
+				newButton.name = "btn_level_" + (i + 1);
+				newButton["txt_level"].text = "Puzzle " + (i + 1);
+				newButton["txt_desc"].text = App.GetInstance().mLevel.introText[i + 1];
+				newButton["mcSolved"].visible = App.GetInstance().mData.puzzleSolved[i + 1];
+				newButton.addEventListener(MouseEvent.CLICK, onClicked);
+				this["mcContent"].addChild(newButton);
 			}
+			this["mcScroll"].source = this["mcContent"];
+			this["mcScroll"].refreshPane();
 			this["btn_back"].addEventListener(MouseEvent.CLICK, onBack);
 		}
 		
 		protected function onRemoved(e:Event):void {
 			this.removeEventListener(Event.REMOVED_FROM_STAGE, onRemoved);
 			this.removeEventListener(Event.ADDED_TO_STAGE, onAdded);
-			for (var i:int = 1; i < Setting.maxLevel;i+=10){
-				this["btn_level_"+i].removeEventListener(MouseEvent.CLICK, onClicked);
-			}
 			this["btn_back"].removeEventListener(MouseEvent.CLICK, onBack);
 		}
 

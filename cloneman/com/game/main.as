@@ -3,7 +3,10 @@
 	import com.game.common.App;
 	import com.game.common.Setting;
 	import com.game.common.Levels;
+	import flash.display.Loader;
+	import flash.display.LoaderInfo;
 	import flash.events.ProgressEvent;
+	import flash.net.URLRequest;
 	
 	import com.clip.title;
 	import com.clip.intro;
@@ -12,20 +15,40 @@
 	import com.clip.finishClip;
 	import com.clip.levelScreen;
 	import com.clip.creditScreen;
+	import com.clip.optionClip;
 	
 	import flash.display.MovieClip;
 	import flash.events.Event;
+	import flash.system.Security;
 	
 	public class main extends MovieClip {		
 		public function main() {
 			App.GetInstance().mMain = this;
 			this.addEventListener(Event.ADDED_TO_STAGE, onAddedListener);
-			this["mPreloader"].initLoader(this.loaderInfo);
+			//this["mPreloader"].initLoader(this.root.loaderInfo);
+			
+			var paramObj:Object = LoaderInfo(this.loaderInfo).parameters;
+			var apiPath:String = paramObj.kongregate_api_path || "http://www.kongregate.com/flash/API_AS3_Local.swf";
+			
+			Security.allowDomain(apiPath);
+			
+			var request:URLRequest = new URLRequest(apiPath);
+			var loader:Loader = new Loader();
+			loader.contentLoaderInfo.addEventListener(Event.COMPLETE, loadAPIComplete);
+			loader.load(request);
+			this.addChild(loader);
 		}
 		
 		protected function onAddedListener(e:Event):void {
 			this.removeEventListener(Event.ADDED_TO_STAGE, onAddedListener);
 			init();
+		}
+		
+		protected function loadAPIComplete(e:Event):void {
+			App.GetInstance().kongregate = e.target.content;
+			App.GetInstance().kongregate.services.connect();
+			
+			this.play();
 		}
 		
 		protected function init():void {
@@ -46,6 +69,11 @@
 		public function CreateLevelScreen():void {
 			var level:levelScreen = new levelScreen();
 			this.addChild(level);
+		}
+		
+		public function CreateOptionScreen():void {
+			var opt:optionClip = new optionClip();
+			this.addChild(opt);
 		}
 		
 		public function CreateCreditScreen():void {
@@ -99,6 +127,7 @@
 			App.GetInstance().gameState = Setting.STATE_RESULT;
 			switch(result) {
 				case Setting.RESULT_WIN:
+					App.GetInstance().mData.SolvedPuzzle(App.GetInstance().curLevel);
 					this.addChild(new resultWin());
 					break;
 				case Setting.RESULT_LOSE:
@@ -119,7 +148,8 @@
 				App.GetInstance().curLevel++;
 				initLevel();
 			}else {
-				this.addChild(new finishClip());
+				//this.addChild(new finishClip());
+				CreateTitlePage();
 			}
 		}
 		

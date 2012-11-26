@@ -6,7 +6,7 @@
 	 */
 	public class Setting{
 		public static var gameSpeed:int		= 30;
-		public static var defaultLevel:int	= 1;
+		public static var defaultLevel:int	= 22;
 		public static var maxLevel:int		= 20;
 		public static var removeClone:int	= 5000 / gameSpeed;
 		

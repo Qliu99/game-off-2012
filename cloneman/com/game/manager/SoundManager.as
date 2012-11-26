@@ -1,5 +1,7 @@
 ﻿package com.game.manager
 {
+	import com.game.common.App;
+	
 	import flash.events.Event;
 	import flash.media.Sound;
 	import flash.media.SoundChannel;
@@ -15,6 +17,7 @@
 		var loopMusic:Sound;
 		var curMusic:String;
 		var isChanging:Boolean	= false;
+		var lastStop:int		= 0;
 		
 		public function ClearSound():void {
 			for (var i:String in allObjectSound) {
@@ -43,6 +46,28 @@
 			}
 		}
 		
+		public function ToogleMusic():void {
+			if (App.GetInstance().useMusic) {
+				LoopingMusic();
+			}else{
+				lastStop = loopSoundChannel.position;
+ 				loopSoundChannel.stop();
+				loopSoundChannel.removeEventListener(Event.SOUND_COMPLETE, onSoundComplete);
+			}
+		}
+		
+		public function ToogleSound():void {
+			if (!App.GetInstance().useSound) {
+				for (var i:String in allObjectSound) {
+					try{
+						StopSound(i);
+					}catch (e:Error) {
+						
+					}
+				}
+			}
+		}
+		
 		protected function LoopingMusic():void {
 			if (isChanging) {
 				loopSoundChannel.stop();
@@ -50,8 +75,11 @@
 				var ClassSoundRef:Class = getDefinitionByName(curMusic) as Class;
 				loopMusic = new ClassSoundRef;
 			}
-			loopSoundChannel = loopMusic.play(0);
-			loopSoundChannel.addEventListener(Event.SOUND_COMPLETE, onSoundComplete);
+			if (App.GetInstance().useMusic){
+				loopSoundChannel = loopMusic.play(lastStop);
+				lastStop = 0;
+				loopSoundChannel.addEventListener(Event.SOUND_COMPLETE, onSoundComplete);
+			}
 			isChanging = false;
 		}
 		
@@ -69,6 +97,7 @@
 		public function PlaySound(type:String, who:String):void {
 			var ClassSoundRef:Class;
 			var sound:Sound;
+			if (!App.GetInstance().useSound) return;
 			if (allObjectSound[who] != null) {
 				if (allObjectSound[who]["curSoundName"] == type) {
 					var channel:SoundChannel = allObjectSound[who]["channel"];
