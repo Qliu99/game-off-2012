@@ -22,7 +22,7 @@
 
 		public function SolvedPuzzle(level:int):void {
 			mSO.data["solved_" + level] = true;
-			puzzleSolved[i] = true;
+			puzzleSolved[level] = true;
 			SaveData();
 		}
 		

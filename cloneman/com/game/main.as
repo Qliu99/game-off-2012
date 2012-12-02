@@ -21,7 +21,9 @@
 	import flash.events.Event;
 	import flash.system.Security;
 	
-	public class main extends MovieClip {		
+	public class main extends MovieClip {
+		protected var timeUse:Number = 0;
+		
 		public function main() {
 			App.GetInstance().mMain = this;
 			this.addEventListener(Event.ADDED_TO_STAGE, onAddedListener);
@@ -48,7 +50,9 @@
 			App.GetInstance().kongregate = e.target.content;
 			App.GetInstance().kongregate.services.connect();
 			
-			this.play();
+			App.GetInstance().mStat.submitCompletedStatistic();
+			
+			CreateTitlePage();
 		}
 		
 		protected function init():void {
@@ -102,7 +106,7 @@
 			
 			var batchMap:String = App.GetInstance().mLevel.stageMap[App.GetInstance().curLevel];
 			this.addChild(App.GetInstance().mMap.CreateMap(batchMap));
-
+			
 			var mIntro:intro = new intro();
 			this.addChild(mIntro);
 			
@@ -121,13 +125,18 @@
 			stage.focus = this;
 			
 			App.GetInstance().gameState = Setting.STATE_START;			
+
+			timeUse = new Date().time;			
 		}
 		
 		public function ShowResult(result:int):void {
+			timeUse = (new Date().time) - timeUse;
 			App.GetInstance().gameState = Setting.STATE_RESULT;
 			switch(result) {
 				case Setting.RESULT_WIN:
 					App.GetInstance().mData.SolvedPuzzle(App.GetInstance().curLevel);
+					App.GetInstance().mStat.submitCompletedStatistic();
+					App.GetInstance().mStat.submitFastestTime(App.GetInstance().curLevel, timeUse);
 					this.addChild(new resultWin());
 					break;
 				case Setting.RESULT_LOSE:
